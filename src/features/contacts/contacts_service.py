@@ -1,9 +1,11 @@
 from fastapi import HTTPException
+from libgravatar import Gravatar
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from src.features.contacts.contacts_repository import ContactsRepository
-from src.features.contacts.schema.contact_schema import ContactModel
+from src.auth.contacts_repository import ContactsRepository
+from src.auth.contact_schema import ContactModel
+from src.auth.hash import Hash
 from src.features.contacts.schema.contact_update_schema import ContactUpdateModel
 
 
@@ -33,6 +35,12 @@ class ContactsService:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail="Contact already exists"
             )
+
+        password_hash = Hash().get_password_hash(body.password)
+        body.password = password_hash
+
+        g = Gravatar(body.email)
+        body.avatar = g.get_image()
 
         return await self.contacts_repository.create_contact(body)
 

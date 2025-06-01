@@ -9,4 +9,5 @@ class ContactModel(BaseModel):
     email: str = Field(max_length=120)
     phone: str = Field(max_length=12)
     birth_day: date
+    avatar: str | None = None
     data: dict | None = None

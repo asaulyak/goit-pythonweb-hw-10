@@ -3,7 +3,7 @@ from sqlalchemy import select, extract, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models.contacts_model import Contact
-from src.features.contacts.schema.contact_schema import ContactModel
+from src.auth.contact_schema import ContactModel
 from src.features.contacts.schema.contact_update_schema import ContactUpdateModel
 
 

@@ -1,12 +1,14 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.hash import get_current_user
 from src.database import get_db
 from src.features.contacts.contacts_service import ContactsService
+from src.features.contacts.schema.contact_create_schema import ContactCreateModel
 from src.features.contacts.schema.contact_response_schema import ContactResponseModel
-from src.features.contacts.schema.contact_schema import ContactModel
+from src.auth.contact_schema import ContactModel
 from src.features.contacts.schema.contact_update_schema import ContactUpdateModel
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
@@ -42,12 +44,17 @@ async def search(db: AsyncSession = Depends(get_db)):
 
 
 @router.post(
-    "/", response_model=ContactResponseModel, status_code=status.HTTP_201_CREATED
+    "/signup", response_model=ContactResponseModel, status_code=status.HTTP_201_CREATED
 )
-async def create_contact(body: ContactModel, db: AsyncSession = Depends(get_db)):
+async def create_contact(body: ContactCreateModel, db: AsyncSession = Depends(get_db)):
     contacts_service = ContactsService(db)
 
     return await contacts_service.create_contact(body)
+
+
+@router.get("/me", response_model=ContactModel)
+async def me(contact: ContactModel = Depends(get_current_user)):
+    return contact
 
 
 @router.get("/{contact_id}", response_model=ContactResponseModel)
@@ -62,15 +69,28 @@ async def get_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
     status_code=status.HTTP_201_CREATED,
 )
 async def create_contact(
-    contact_id: int, body: ContactUpdateModel, db: AsyncSession = Depends(get_db)
+    contact_id: int,
+    body: ContactUpdateModel,
+    contact: ContactModel = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
+    if contact.id != contact_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
     contacts_service = ContactsService(db)
 
     return await contacts_service.update_contact(contact_id, body)
 
 
 @router.delete("/{contact_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_contact(
+    contact_id: int,
+    contact: ContactModel = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if contact.id != contact_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
     contacts_service = ContactsService(db)
 
     await contacts_service.delete_contact(contact_id)

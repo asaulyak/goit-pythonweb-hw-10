@@ -1,9 +1,12 @@
 from fastapi import FastAPI
+
+from src.features.auth import login_controller
 from src.features.contacts import contacts_controller
 
 app = FastAPI()
 
 app.include_router(contacts_controller.router, prefix="/api")
+app.include_router(login_controller.router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn
