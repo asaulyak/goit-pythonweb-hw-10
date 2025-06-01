@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import select, extract, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,8 +48,21 @@ class ContactsRepository:
 
         return contact.scalar_one_or_none()
 
+    async def get_contact_by_verification_token(
+        self, verification_token: str
+    ) -> Contact | None:
+        stmt = select(Contact).filter_by(verification_token=verification_token)
+        contact = await self.db.execute(stmt)
+
+        return contact.scalar_one_or_none()
+
     async def create_contact(self, body: ContactModel) -> Contact:
-        contact = Contact(**body.model_dump(exclude_unset=True))
+        verification_token = uuid.uuid4()
+
+        contact = Contact(
+            verification_token=str(verification_token),
+            **body.model_dump(exclude_unset=True),
+        )
         self.db.add(contact)
         await self.db.commit()
         await self.db.refresh(contact)
@@ -110,3 +124,12 @@ class ContactsRepository:
 
         contacts = await self.db.execute(stmt)
         return contacts.scalars().all()
+
+    async def verify_email(self, email: str):
+        contact = await self.get_contact_by_email(email)
+
+        if contact:
+            contact.verified = True
+            contact.verification_token = None
+            await self.db.commit()
+            await self.db.refresh(contact)

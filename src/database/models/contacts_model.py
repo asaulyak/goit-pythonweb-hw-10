@@ -19,6 +19,8 @@ class Contact(Base):
     data: Mapped[dict] = mapped_column(JSONB, nullable=True)
     password: Mapped[str] = mapped_column(String(255))
     avatar: Mapped[str] = mapped_column(String(255), nullable=True)
+    verified: Mapped[bool] = mapped_column(default=False)
+    verification_token: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
