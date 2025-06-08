@@ -1,7 +1,9 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from src.auth.hash import get_current_user
 from src.database import get_db
@@ -12,6 +14,7 @@ from src.auth.contact_schema import ContactModel
 from src.features.contacts.schema.contact_update_schema import ContactUpdateModel
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("/", response_model=list[ContactResponseModel])
@@ -53,7 +56,8 @@ async def create_contact(body: ContactCreateModel, db: AsyncSession = Depends(ge
 
 
 @router.get("/me", response_model=ContactModel)
-async def me(contact: ContactModel = Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def me(request: Request, contact: ContactModel = Depends(get_current_user)):
     return contact
 
 

@@ -1,9 +1,21 @@
 from fastapi import FastAPI
+from slowapi.errors import RateLimitExceeded
+from starlette.responses import JSONResponse
 
 from src.features.auth import auth_controller
 from src.features.contacts import contacts_controller
+from fastapi import Request
 
 app = FastAPI()
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"error": "rate limit exceeded. Try again later"},
+    )
+
 
 app.include_router(contacts_controller.router, prefix="/api")
 app.include_router(auth_controller.router, prefix="/api")
