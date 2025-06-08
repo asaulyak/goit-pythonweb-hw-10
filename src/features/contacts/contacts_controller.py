@@ -1,11 +1,12 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, status, HTTPException, Request
+from fastapi import APIRouter, Depends, status, HTTPException, Request, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from src.auth.hash import get_current_user
+from src.cloudinary.upload_file_service import UploadFileService
 from src.database import get_db
 from src.features.contacts.contacts_service import ContactsService
 from src.features.contacts.schema.contact_create_schema import ContactCreateModel
@@ -65,6 +66,18 @@ async def me(request: Request, contact: ContactModel = Depends(get_current_user)
 async def get_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
     contacts_service = ContactsService(db)
     return await contacts_service.get_contact_by_id(contact_id)
+
+
+@router.patch("/avatar", response_model=ContactResponseModel)
+async def update_avatar_user(
+    file: UploadFile = File(),
+    contact: ContactModel = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    avatar_url = UploadFileService().upload_file(file, contact.id)
+
+    contacts_service = ContactsService(db)
+    return await contacts_service.update_avatar_url(contact.id, avatar_url)
 
 
 @router.patch(

@@ -80,3 +80,8 @@ class ContactsService:
 
     async def soon_celebrate(self, days: int = 7):
         return await self.contacts_repository.bd_soon(days)
+
+    async def update_avatar_url(self, contact_id, avatar_url):
+        await self.contacts_repository.update_avatar_url(contact_id, avatar_url)
+
+        return await self.contacts_repository.get_contact_by_id(contact_id)

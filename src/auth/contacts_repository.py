@@ -133,3 +133,14 @@ class ContactsRepository:
             contact.verification_token = None
             await self.db.commit()
             await self.db.refresh(contact)
+
+    async def update_avatar_url(self, contact_id, avatar_url):
+        contact = await self.get_contact_by_id(contact_id)
+
+        if not contact:
+            return None
+
+        contact.avatar = avatar_url
+        await self.db.commit()
+
+        return contact
