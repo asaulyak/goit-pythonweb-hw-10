@@ -6,7 +6,9 @@ from starlette import status
 from src.auth.contacts_repository import ContactsRepository
 from src.auth.contact_schema import ContactModel
 from src.auth.hash import Hash
+from src.email.email_service import send_email
 from src.features.contacts.schema.contact_update_schema import ContactUpdateModel
+from src.config import settings
 
 
 class ContactsService:
@@ -42,7 +44,20 @@ class ContactsService:
         g = Gravatar(body.email)
         body.avatar = g.get_image()
 
-        return await self.contacts_repository.create_contact(body)
+        contact = await self.contacts_repository.create_contact(body)
+
+        await send_email(
+            contact.email,
+            "Welcome to Contacts",
+            "verify_email.html",
+            {
+                "token": contact.verification_token,
+                "host": settings.HOST,
+                "first_name": contact.first_name,
+            },
+        )
+
+        return contact
 
     async def update_contact(self, contact_id: int, body: ContactUpdateModel):
         return await self.contacts_repository.update_contact(contact_id, body)

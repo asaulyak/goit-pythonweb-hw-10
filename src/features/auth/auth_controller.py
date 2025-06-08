@@ -16,7 +16,7 @@ async def login(body: LoginModel, db: AsyncSession = Depends(get_db)):
     return await auth_service.login(body)
 
 
-@router.post("/verify/{verification_token}", status_code=200)
+@router.get("/verify/{verification_token}", status_code=200)
 async def login(verification_token: str, db: AsyncSession = Depends(get_db)):
     auth_service = AuthService(db)
 
