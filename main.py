@@ -5,8 +5,20 @@ from starlette.responses import JSONResponse
 from src.features.auth import auth_controller
 from src.features.contacts import contacts_controller
 from fastapi import Request
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = ["http://localhost:3000"]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.exception_handler(RateLimitExceeded)
